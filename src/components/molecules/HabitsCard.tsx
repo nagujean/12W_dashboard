@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { SectionHeader } from '@/components/atoms/SectionHeader';
-import { Check, X } from 'lucide-react';
+import { Check, X, Plus, Trash2 } from 'lucide-react';
 import { Habit } from '@/types';
 import { useStore } from '@/stores/useStore';
 
@@ -29,16 +32,56 @@ function getWeekDays(): string[] {
 const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
 
 export function HabitsCard({ habits }: HabitsCardProps) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [newHabitName, setNewHabitName] = useState('');
+
   const toggleHabit = useStore((state) => state.toggleHabit);
+  const addHabit = useStore((state) => state.addHabit);
+  const deleteHabit = useStore((state) => state.deleteHabit);
+
   const weekDays = getWeekDays();
   const today = new Date().toISOString().split('T')[0];
+
+  const handleAddHabit = () => {
+    if (newHabitName.trim()) {
+      addHabit({
+        name: newHabitName.trim(),
+        targetDaysPerWeek: 7
+      });
+      setNewHabitName('');
+      setIsAdding(false);
+    }
+  };
 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <SectionHeader title="습관 트래커" />
+        <div className="flex items-center justify-between">
+          <SectionHeader title="습관 트래커" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setIsAdding(!isAdding)}
+          >
+            {isAdding ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
+        {isAdding && (
+          <div className="flex gap-2 mb-3">
+            <Input
+              placeholder="새 습관 입력..."
+              value={newHabitName}
+              onChange={(e) => setNewHabitName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddHabit()}
+              autoFocus
+            />
+            <Button size="sm" onClick={handleAddHabit}>추가</Button>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -54,13 +97,14 @@ export function HabitsCard({ habits }: HabitsCardProps) {
                     {day}
                   </th>
                 ))}
+                <th className="w-8"></th>
               </tr>
             </thead>
             <tbody>
               {habits.map((habit) => (
-                <tr key={habit.id} className="border-t">
+                <tr key={habit.id} className="border-t group">
                   <td className="py-2 pr-4 text-gray-700">{habit.name}</td>
-                  {weekDays.map((date, i) => {
+                  {weekDays.map((date) => {
                     const isCompleted = habit.completedDates.includes(date);
                     const isToday = date === today;
                     const isPast = date < today;
@@ -89,11 +133,25 @@ export function HabitsCard({ habits }: HabitsCardProps) {
                       </td>
                     );
                   })}
+                  <td className="py-2">
+                    <button
+                      onClick={() => deleteHabit(habit.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {habits.length === 0 && !isAdding && (
+          <p className="text-sm text-gray-400 text-center py-4">
+            + 버튼을 눌러 추적할 습관을 추가하세요
+          </p>
+        )}
       </CardContent>
     </Card>
   );
