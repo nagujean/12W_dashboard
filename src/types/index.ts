@@ -47,14 +47,21 @@ export interface LeadIndicator {
   unit: string;
 }
 
+// 각 사이클이 자체 데이터를 포함하도록 확장
 export interface TwelveWeekCycle {
   id: string;
+  name: string; // 사이클 이름 (예: "2026 Q1", "건강 프로젝트")
   startDate: string;
   endDate: string;
   vision: string;
   goals: Goal[];
   currentWeek: number;
   weeklyScores: WeeklyScore[];
+  weeklyTasks: WeeklyTask[];
+  dailyActions: DailyAction[];
+  habits: Habit[];
+  status: 'active' | 'completed' | 'archived';
+  createdAt: string;
 }
 
 // 가이드 정보 타입

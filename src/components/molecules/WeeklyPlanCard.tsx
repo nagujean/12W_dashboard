@@ -20,7 +20,9 @@ export function WeeklyPlanCard({ tasks }: WeeklyPlanCardProps) {
   const toggleWeeklyTask = useStore((state) => state.toggleWeeklyTask);
   const addWeeklyTask = useStore((state) => state.addWeeklyTask);
   const deleteWeeklyTask = useStore((state) => state.deleteWeeklyTask);
-  const goals = useStore((state) => state.cycle.goals);
+  const getCurrentCycle = useStore((state) => state.getCurrentCycle);
+  const cycle = getCurrentCycle();
+  const goals = cycle?.goals || [];
 
   const completedCount = tasks.filter(t => t.completed).length;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,11 @@ export function VisionCard({ cycle }: VisionCardProps) {
   const addGoal = useStore((state) => state.addGoal);
   const updateGoal = useStore((state) => state.updateGoal);
   const deleteGoal = useStore((state) => state.deleteGoal);
+
+  // 사이클 변경 시 비전 입력 상태 동기화
+  useEffect(() => {
+    setEditedVision(cycle.vision);
+  }, [cycle.id, cycle.vision]);
 
   const totalProgress = cycle.goals.length > 0
     ? Math.round(cycle.goals.reduce((sum, goal) => sum + goal.progress, 0) / cycle.goals.length)
