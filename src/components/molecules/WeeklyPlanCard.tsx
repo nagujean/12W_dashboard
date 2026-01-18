@@ -45,17 +45,17 @@ export function WeeklyPlanCard({ tasks }: WeeklyPlanCardProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 px-3 sm:px-6">
         <div className="flex items-center justify-between">
           <SectionHeader title="주간 계획" guide={SECTION_GUIDES.weeklyPlan} />
           <div className="flex items-center gap-2">
-            <Badge variant="outline">
-              {completedCount} / {tasks.length} 완료
+            <Badge variant="outline" className="text-xs">
+              {completedCount}/{tasks.length}
             </Badge>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-9 w-9"
               onClick={() => setIsAdding(!isAdding)}
             >
               {isAdding ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
@@ -63,7 +63,7 @@ export function WeeklyPlanCard({ tasks }: WeeklyPlanCardProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6">
         {isAdding && (
           <div className="flex gap-2 mb-3">
             <Input
@@ -72,35 +72,36 @@ export function WeeklyPlanCard({ tasks }: WeeklyPlanCardProps) {
               onChange={(e) => setNewTaskTitle(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
               autoFocus
+              className="text-base"
             />
-            <Button size="sm" onClick={handleAddTask}>추가</Button>
+            <Button size="sm" onClick={handleAddTask} className="px-4">추가</Button>
           </div>
         )}
-        <ul className="space-y-2">
+        <ul className="space-y-1">
           {tasks.map((task) => (
             <li
               key={task.id}
-              className={`flex items-center gap-3 p-2 rounded group hover:bg-gray-50 ${
+              className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg group hover:bg-gray-50 active:bg-gray-100 ${
                 task.completed ? 'opacity-60' : ''
               }`}
             >
               <button
                 onClick={() => toggleWeeklyTask(task.id)}
-                className="flex-shrink-0"
+                className="flex-shrink-0 p-1"
               >
                 {task.completed ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-6 h-6 text-green-500" />
                 ) : (
-                  <Circle className="w-5 h-5 text-gray-300 hover:text-gray-400" />
+                  <Circle className="w-6 h-6 text-gray-300" />
                 )}
               </button>
               <span className={`text-sm flex-1 ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
                 {task.title}
               </span>
-              <span className="text-xs text-gray-400">{task.dueDate.slice(5)}</span>
+              <span className="text-xs text-gray-400 hidden sm:block">{task.dueDate.slice(5)}</span>
               <button
                 onClick={() => deleteWeeklyTask(task.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded"
+                className="opacity-0 group-hover:opacity-100 sm:opacity-0 active:opacity-100 transition-opacity p-1.5 hover:bg-red-50 rounded"
               >
                 <Trash2 className="w-4 h-4 text-red-400" />
               </button>

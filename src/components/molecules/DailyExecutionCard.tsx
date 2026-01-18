@@ -47,17 +47,17 @@ export function DailyExecutionCard({ actions }: DailyExecutionCardProps) {
 
   return (
     <Card className="border-t-4 border-t-orange-400">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 px-3 sm:px-6">
         <div className="flex items-center justify-between">
           <SectionHeader title="오늘의 실행" guide={SECTION_GUIDES.dailyExecution} />
           <div className="flex items-center gap-2">
-            <Badge variant={completedCount === actions.length && actions.length > 0 ? "default" : "secondary"}>
-              {completedCount} / {actions.length}
+            <Badge variant={completedCount === actions.length && actions.length > 0 ? "default" : "secondary"} className="text-xs">
+              {completedCount}/{actions.length}
             </Badge>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-9 w-9"
               onClick={() => setIsAdding(!isAdding)}
             >
               {isAdding ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
@@ -65,7 +65,7 @@ export function DailyExecutionCard({ actions }: DailyExecutionCardProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6">
         <p className="text-xs text-gray-500 mb-3">
           오늘 집중할 핵심 행동 (최대 3개 권장)
         </p>
@@ -78,6 +78,7 @@ export function DailyExecutionCard({ actions }: DailyExecutionCardProps) {
               onChange={(e) => setNewActionTitle(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddAction()}
               autoFocus
+              className="text-base"
             />
             <div className="flex gap-2">
               {(['high', 'medium', 'low'] as const).map((p) => {
@@ -88,14 +89,14 @@ export function DailyExecutionCard({ actions }: DailyExecutionCardProps) {
                     variant={newPriority === p ? "default" : "outline"}
                     size="sm"
                     onClick={() => setNewPriority(p)}
-                    className="flex-1"
+                    className="flex-1 h-10"
                   >
                     {config.label}
                   </Button>
                 );
               })}
             </div>
-            <Button size="sm" onClick={handleAddAction} className="w-full">추가</Button>
+            <Button size="sm" onClick={handleAddAction} className="w-full h-10">추가</Button>
           </div>
         )}
 
@@ -107,18 +108,18 @@ export function DailyExecutionCard({ actions }: DailyExecutionCardProps) {
             return (
               <li
                 key={action.id}
-                className={`flex items-center gap-3 p-3 rounded-lg group ${
+                className={`flex items-center gap-2 sm:gap-3 p-3 rounded-lg group active:opacity-80 ${
                   action.completed ? 'bg-gray-50 opacity-60' : config.bg
                 }`}
               >
                 <button
                   onClick={() => toggleDailyAction(action.id)}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 p-1"
                 >
                   {action.completed ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <CheckCircle2 className="w-6 h-6 text-green-500" />
                   ) : (
-                    <Circle className="w-5 h-5 text-gray-300 hover:text-gray-400" />
+                    <Circle className="w-6 h-6 text-gray-300" />
                   )}
                 </button>
                 <span className={`text-sm flex-1 font-medium ${
@@ -126,10 +127,10 @@ export function DailyExecutionCard({ actions }: DailyExecutionCardProps) {
                 }`}>
                   {action.title}
                 </span>
-                <Icon className={`w-4 h-4 ${action.completed ? 'text-gray-300' : config.color}`} />
+                <Icon className={`w-5 h-5 ${action.completed ? 'text-gray-300' : config.color}`} />
                 <button
                   onClick={() => deleteDailyAction(action.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded"
+                  className="opacity-0 group-hover:opacity-100 sm:opacity-0 active:opacity-100 transition-opacity p-1.5 hover:bg-red-100 rounded"
                 >
                   <Trash2 className="w-4 h-4 text-red-400" />
                 </button>

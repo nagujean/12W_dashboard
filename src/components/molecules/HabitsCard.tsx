@@ -55,20 +55,20 @@ export function HabitsCard({ habits }: HabitsCardProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 px-3 sm:px-6">
         <div className="flex items-center justify-between">
           <SectionHeader title="습관 트래커" />
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-9 w-9"
             onClick={() => setIsAdding(!isAdding)}
           >
             {isAdding ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6">
         {isAdding && (
           <div className="flex gap-2 mb-3">
             <Input
@@ -77,74 +77,76 @@ export function HabitsCard({ habits }: HabitsCardProps) {
               onChange={(e) => setNewHabitName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddHabit()}
               autoFocus
+              className="text-base"
             />
-            <Button size="sm" onClick={handleAddHabit}>추가</Button>
+            <Button size="sm" onClick={handleAddHabit} className="px-4">추가</Button>
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr>
-                <th className="text-left font-medium text-gray-600 pb-2 pr-4">습관</th>
-                {dayNames.map((day, i) => (
-                  <th
-                    key={day}
-                    className={`text-center font-medium pb-2 w-8 ${
-                      weekDays[i] === today ? 'text-blue-600' : 'text-gray-400'
-                    }`}
-                  >
-                    {day}
-                  </th>
-                ))}
-                <th className="w-8"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {habits.map((habit) => (
-                <tr key={habit.id} className="border-t group">
-                  <td className="py-2 pr-4 text-gray-700">{habit.name}</td>
-                  {weekDays.map((date) => {
-                    const isCompleted = habit.completedDates.includes(date);
-                    const isToday = date === today;
-                    const isPast = date < today;
+        {/* 요일 헤더 */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {dayNames.map((day, i) => (
+            <div
+              key={day}
+              className={`text-center text-xs sm:text-sm font-medium py-1 ${
+                weekDays[i] === today ? 'text-blue-600' : 'text-gray-400'
+              }`}
+            >
+              {day}
+            </div>
+          ))}
+        </div>
 
-                    return (
-                      <td key={date} className="text-center py-2">
-                        <button
-                          onClick={() => toggleHabit(habit.id, date)}
-                          disabled={!isPast && !isToday}
-                          className={`w-6 h-6 rounded flex items-center justify-center transition-all ${
-                            isCompleted
-                              ? 'bg-green-100 text-green-600'
-                              : isToday
-                              ? 'bg-blue-50 text-gray-300 hover:bg-blue-100'
-                              : isPast
-                              ? 'bg-red-50 text-red-300'
-                              : 'bg-gray-50 text-gray-200'
-                          } ${(isPast || isToday) ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}
-                        >
-                          {isCompleted ? (
-                            <Check className="w-4 h-4" />
-                          ) : isPast ? (
-                            <X className="w-3 h-3" />
-                          ) : null}
-                        </button>
-                      </td>
-                    );
-                  })}
-                  <td className="py-2">
+        {/* 습관 목록 */}
+        <div className="space-y-3">
+          {habits.map((habit) => (
+            <div key={habit.id} className="border rounded-lg p-2 sm:p-3 group">
+              {/* 습관 이름 + 삭제 버튼 */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700 truncate flex-1">
+                  {habit.name}
+                </span>
+                <button
+                  onClick={() => deleteHabit(habit.id)}
+                  className="opacity-0 group-hover:opacity-100 sm:opacity-0 active:opacity-100 transition-opacity p-1.5 hover:bg-red-50 rounded ml-2"
+                >
+                  <Trash2 className="w-4 h-4 text-red-400" />
+                </button>
+              </div>
+
+              {/* 요일별 체크 버튼 */}
+              <div className="grid grid-cols-7 gap-1">
+                {weekDays.map((date) => {
+                  const isCompleted = habit.completedDates.includes(date);
+                  const isToday = date === today;
+                  const isPast = date < today;
+
+                  return (
                     <button
-                      onClick={() => deleteHabit(habit.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 rounded"
+                      key={date}
+                      onClick={() => toggleHabit(habit.id, date)}
+                      disabled={!isPast && !isToday}
+                      className={`aspect-square min-h-[36px] sm:min-h-[40px] rounded-lg flex items-center justify-center transition-all ${
+                        isCompleted
+                          ? 'bg-green-100 text-green-600'
+                          : isToday
+                          ? 'bg-blue-50 text-gray-300 hover:bg-blue-100 ring-2 ring-blue-200'
+                          : isPast
+                          ? 'bg-red-50 text-red-300'
+                          : 'bg-gray-50 text-gray-200'
+                      } ${(isPast || isToday) ? 'cursor-pointer active:scale-95' : 'cursor-default'}`}
                     >
-                      <Trash2 className="w-4 h-4 text-red-400" />
+                      {isCompleted ? (
+                        <Check className="w-5 h-5" />
+                      ) : isPast ? (
+                        <X className="w-4 h-4" />
+                      ) : null}
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
 
         {habits.length === 0 && !isAdding && (
