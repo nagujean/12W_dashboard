@@ -1,5 +1,8 @@
 // 12주 법칙 관련 타입 정의
 
+// Re-export User type from Supabase
+export type { User } from '@supabase/supabase-js';
+
 export interface Goal {
   id: string;
   title: string;

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '@/stores/useStore';
+import { useAuthContext } from '@/providers/AuthProvider';
 import { VisionCard } from '@/components/molecules/VisionCard';
 import { WeeklyPlanCard } from '@/components/molecules/WeeklyPlanCard';
 import { DailyExecutionCard } from '@/components/molecules/DailyExecutionCard';
@@ -27,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, RotateCcw, Trash2, Archive, FolderOpen, Menu } from 'lucide-react';
+import { Plus, Trash2, Archive, FolderOpen, Menu, LogOut, Loader2, AlertCircle } from 'lucide-react';
 
 export function Dashboard() {
   const [isNewCycleOpen, setIsNewCycleOpen] = useState(false);
@@ -36,31 +37,149 @@ export function Dashboard() {
   const [newVision, setNewVision] = useState('');
   const [newStartDate, setNewStartDate] = useState(new Date().toISOString().split('T')[0]);
 
+  const { user, signOut } = useAuthContext();
+
   const cycles = useStore((state) => state.cycles);
   const currentCycleId = useStore((state) => state.currentCycleId);
+  const loading = useStore((state) => state.loading);
+  const error = useStore((state) => state.error);
   const getCurrentCycle = useStore((state) => state.getCurrentCycle);
   const getWeeklyExecutionRate = useStore((state) => state.getWeeklyExecutionRate);
   const createCycle = useStore((state) => state.createCycle);
   const selectCycle = useStore((state) => state.selectCycle);
   const deleteCycle = useStore((state) => state.deleteCycle);
   const archiveCycle = useStore((state) => state.archiveCycle);
-  const resetToMockData = useStore((state) => state.resetToMockData);
+  const fetchCycles = useStore((state) => state.fetchCycles);
+  const setUser = useStore((state) => state.setUser);
+  const setError = useStore((state) => state.setError);
+
+  // 사용자가 로그인하면 데이터 로드
+  useEffect(() => {
+    if (user) {
+      setUser(user);
+      fetchCycles();
+    }
+  }, [user, setUser, fetchCycles]);
 
   const cycle = getCurrentCycle();
   const executionRate = getWeeklyExecutionRate();
 
+  const handleSignOut = async () => {
+    await signOut();
+    setUser(null);
+  };
+
+  const handleDismissError = () => {
+    setError(null);
+  };
+
+  const handleCreateCycle = async () => {
+    if (newCycleName.trim() && newVision.trim()) {
+      await createCycle(newCycleName.trim(), newVision.trim(), newStartDate);
+      setIsNewCycleOpen(false);
+      setNewCycleName('');
+      setNewVision('');
+    }
+  };
+
+  // 로딩 상태
+  if (loading && cycles.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+          <p className="mt-4 text-gray-500">데이터를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   // 현재 사이클이 없으면 안내 메시지
   if (!cycle) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-gray-900">12주의 법칙</h1>
-          <p className="text-gray-500">사이클이 없습니다. 새 사이클을 시작하세요.</p>
-          <Button onClick={() => setIsNewCycleOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            새 사이클 시작
-          </Button>
+      <div className="min-h-screen bg-gray-50">
+        {/* 에러 알림 */}
+        {error && (
+          <div className="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg flex items-start gap-3 max-w-md">
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+            <button onClick={handleDismissError} className="text-red-400 hover:text-red-600">
+              ×
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold text-gray-900">12주의 법칙</h1>
+            <p className="text-gray-500">
+              {user?.email ? `${user.email}님, ` : ''}사이클이 없습니다. 새 사이클을 시작하세요.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Button onClick={() => setIsNewCycleOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                새 사이클 시작
+              </Button>
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                로그아웃
+              </Button>
+            </div>
+          </div>
         </div>
+
+        {/* 새 사이클 다이얼로그 */}
+        <Dialog open={isNewCycleOpen} onOpenChange={setIsNewCycleOpen}>
+          <DialogContent className="max-w-[95vw] sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>새 12주 사이클 시작</DialogTitle>
+              <DialogDescription>
+                새로운 12주 사이클을 만듭니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">사이클 이름</label>
+                <Input
+                  placeholder="예: 2026 Q1 건강 프로젝트"
+                  value={newCycleName}
+                  onChange={(e) => setNewCycleName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">비전</label>
+                <Input
+                  placeholder="12주 후 달성할 모습"
+                  value={newVision}
+                  onChange={(e) => setNewVision(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">시작일</label>
+                <Input
+                  type="date"
+                  value={newStartDate}
+                  onChange={(e) => setNewStartDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setIsNewCycleOpen(false)} className="w-full sm:w-auto">
+                취소
+              </Button>
+              <Button
+                onClick={handleCreateCycle}
+                disabled={!newCycleName.trim() || !newVision.trim() || loading}
+                className="w-full sm:w-auto"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                시작하기
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -76,20 +195,24 @@ export function Dashboard() {
     };
   });
 
-  const handleCreateCycle = () => {
-    if (newCycleName.trim() && newVision.trim()) {
-      createCycle(newCycleName.trim(), newVision.trim(), newStartDate);
-      setIsNewCycleOpen(false);
-      setNewCycleName('');
-      setNewVision('');
-    }
-  };
-
   const activeCycles = cycles.filter(c => c.status === 'active');
   const archivedCycles = cycles.filter(c => c.status === 'archived');
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 에러 알림 */}
+      {error && (
+        <div className="fixed top-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg flex items-start gap-3 max-w-md">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+          <button onClick={handleDismissError} className="text-red-400 hover:text-red-600">
+            ×
+          </button>
+        </div>
+      )}
+
       {/* 헤더 - 모바일 최적화 */}
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
@@ -99,7 +222,7 @@ export function Dashboard() {
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900">12주의 법칙</h1>
                 <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
-                  브라이언 P. 모건의 방법론 기반 생산성 대시보드
+                  {user?.email}
                 </p>
               </div>
             </div>
@@ -159,7 +282,11 @@ export function Dashboard() {
                       <Button variant="outline" onClick={() => setIsNewCycleOpen(false)}>
                         취소
                       </Button>
-                      <Button onClick={handleCreateCycle} disabled={!newCycleName.trim() || !newVision.trim()}>
+                      <Button
+                        onClick={handleCreateCycle}
+                        disabled={!newCycleName.trim() || !newVision.trim() || loading}
+                      >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                         시작하기
                       </Button>
                     </DialogFooter>
@@ -201,6 +328,7 @@ export function Dashboard() {
                                   className="h-8 w-8"
                                   onClick={() => archiveCycle(c.id)}
                                   title="아카이브"
+                                  disabled={loading}
                                 >
                                   <Archive className="w-4 h-4 text-gray-400" />
                                 </Button>
@@ -210,7 +338,7 @@ export function Dashboard() {
                                   className="h-8 w-8"
                                   onClick={() => deleteCycle(c.id)}
                                   title="삭제"
-                                  disabled={cycles.length === 1}
+                                  disabled={cycles.length === 1 || loading}
                                 >
                                   <Trash2 className="w-4 h-4 text-red-400" />
                                 </Button>
@@ -238,6 +366,7 @@ export function Dashboard() {
                                 className="h-8 w-8"
                                 onClick={() => deleteCycle(c.id)}
                                 title="삭제"
+                                disabled={loading}
                               >
                                 <Trash2 className="w-4 h-4 text-red-400" />
                               </Button>
@@ -252,10 +381,10 @@ export function Dashboard() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={resetToMockData}
-                  title="샘플 데이터로 리셋"
+                  onClick={handleSignOut}
+                  title="로그아웃"
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <LogOut className="w-4 h-4" />
                 </Button>
               </div>
 
@@ -285,9 +414,9 @@ export function Dashboard() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => { resetToMockData(); setIsCycleListOpen(false); }}
+                      onClick={() => { handleSignOut(); setIsCycleListOpen(false); }}
                     >
-                      <RotateCcw className="w-4 h-4" />
+                      <LogOut className="w-4 h-4" />
                     </Button>
                   </div>
 
@@ -312,6 +441,7 @@ export function Dashboard() {
                                 size="icon"
                                 className="h-9 w-9"
                                 onClick={() => archiveCycle(c.id)}
+                                disabled={loading}
                               >
                                 <Archive className="w-4 h-4 text-gray-400" />
                               </Button>
@@ -320,7 +450,7 @@ export function Dashboard() {
                                 size="icon"
                                 className="h-9 w-9"
                                 onClick={() => deleteCycle(c.id)}
-                                disabled={cycles.length === 1}
+                                disabled={cycles.length === 1 || loading}
                               >
                                 <Trash2 className="w-4 h-4 text-red-400" />
                               </Button>
@@ -347,6 +477,7 @@ export function Dashboard() {
                               size="icon"
                               className="h-9 w-9"
                               onClick={() => deleteCycle(c.id)}
+                              disabled={loading}
                             >
                               <Trash2 className="w-4 h-4 text-red-400" />
                             </Button>
@@ -422,7 +553,12 @@ export function Dashboard() {
             <Button variant="outline" onClick={() => setIsNewCycleOpen(false)} className="w-full sm:w-auto">
               취소
             </Button>
-            <Button onClick={handleCreateCycle} disabled={!newCycleName.trim() || !newVision.trim()} className="w-full sm:w-auto">
+            <Button
+              onClick={handleCreateCycle}
+              disabled={!newCycleName.trim() || !newVision.trim() || loading}
+              className="w-full sm:w-auto"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               시작하기
             </Button>
           </DialogFooter>
